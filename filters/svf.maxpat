@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 224.0, 235.0, 328.0, 461.0 ],
+		"rect" : [ 224.0, 235.0, 328.0, 442.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -46,7 +46,7 @@
 					"numoutlets" : 3,
 					"outlettype" : [ "", "", "float" ],
 					"parameter_enable" : 1,
-					"patching_rect" : [ 84.795833333333348, 121.0, 55.0, 15.0 ],
+					"patching_rect" : [ 79.5, 111.0, 55.0, 15.0 ],
 					"saved_attribute_attributes" : 					{
 						"valueof" : 						{
 							"parameter_enum" : [ "Noise", "Saw", "Square" ],
@@ -241,7 +241,7 @@
  ]
 					}
 ,
-					"patching_rect" : [ 84.795833333333348, 143.0, 35.0, 22.0 ],
+					"patching_rect" : [ 79.5, 133.0, 35.0, 22.0 ],
 					"saved_object_attributes" : 					{
 						"description" : "",
 						"digest" : "",
@@ -259,7 +259,7 @@
 					"maxclass" : "newobj",
 					"numinlets" : 2,
 					"numoutlets" : 0,
-					"patching_rect" : [ 247.795833333333348, 379.0, 35.0, 22.0 ],
+					"patching_rect" : [ 247.795833333333348, 369.0, 35.0, 22.0 ],
 					"text" : "dac~"
 				}
 
@@ -273,7 +273,7 @@
 					"numoutlets" : 5,
 					"outlettype" : [ "signal", "signal", "", "float", "list" ],
 					"parameter_enable" : 1,
-					"patching_rect" : [ 247.795833333333348, 255.0, 35.0, 91.0 ],
+					"patching_rect" : [ 247.795833333333348, 245.0, 35.0, 91.0 ],
 					"saved_attribute_attributes" : 					{
 						"valueof" : 						{
 							"parameter_initial" : [ -70.0 ],
@@ -301,7 +301,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 58.0, 348.0, 177.0, 53.0 ],
+					"patching_rect" : [ 58.0, 338.0, 177.0, 53.0 ],
 					"text" : "Based on Vadim Zavalishin TPT filter from \"The Art of VA Filter Design\""
 				}
 
@@ -314,7 +314,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 58.0, 56.0, 187.0, 23.0 ],
+					"patching_rect" : [ 58.0, 46.0, 187.0, 23.0 ],
 					"text" : "State Variable Filter in Gen~"
 				}
 
@@ -327,14 +327,14 @@
 					"numoutlets" : 3,
 					"outlettype" : [ "", "", "float" ],
 					"parameter_enable" : 1,
-					"patching_rect" : [ 58.0, 100.0, 82.0, 15.0 ],
+					"patching_rect" : [ 58.0, 90.0, 76.5, 15.0 ],
 					"saved_attribute_attributes" : 					{
 						"valueof" : 						{
-							"parameter_enum" : [ "None", "Lowpass", "Bandpass", "Unity Gain BP", "Highpass", "Peak", "Allpass" ],
+							"parameter_enum" : [ "None", "Lowpass", "Bandpass", "Unity Gain BP", "Highpass", "Peak", "Notch", "Allpass" ],
 							"parameter_initial" : [ 1 ],
 							"parameter_initial_enable" : 1,
 							"parameter_longname" : "live.menu",
-							"parameter_mmax" : 6,
+							"parameter_mmax" : 7,
 							"parameter_shortname" : "live.menu",
 							"parameter_type" : 2
 						}
@@ -349,11 +349,11 @@
 				"box" : 				{
 					"id" : "obj-15",
 					"maxclass" : "newobj",
-					"numinlets" : 7,
+					"numinlets" : 8,
 					"numoutlets" : 1,
 					"outlettype" : [ "signal" ],
-					"patching_rect" : [ 58.0, 214.0, 176.795833333333348, 22.0 ],
-					"text" : "selector~ 6"
+					"patching_rect" : [ 58.0, 204.0, 171.5, 22.0 ],
+					"text" : "selector~ 7"
 				}
 
 			}
@@ -365,7 +365,7 @@
 					"numoutlets" : 2,
 					"outlettype" : [ "", "float" ],
 					"parameter_enable" : 1,
-					"patching_rect" : [ 215.795833333333348, 90.0, 41.0, 48.0 ],
+					"patching_rect" : [ 210.5, 80.0, 41.0, 48.0 ],
 					"saved_attribute_attributes" : 					{
 						"valueof" : 						{
 							"parameter_exponent" : 3.0,
@@ -391,7 +391,7 @@
 					"numoutlets" : 2,
 					"outlettype" : [ "", "float" ],
 					"parameter_enable" : 1,
-					"patching_rect" : [ 150.295833333333348, 90.0, 41.0, 48.0 ],
+					"patching_rect" : [ 145.0, 80.0, 41.0, 48.0 ],
 					"saved_attribute_attributes" : 					{
 						"valueof" : 						{
 							"parameter_exponent" : 2.5,
@@ -417,7 +417,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 58.0, 255.0, 177.0, 76.0 ]
+					"patching_rect" : [ 58.0, 245.0, 177.0, 76.0 ]
 				}
 
 			}
@@ -426,9 +426,9 @@
 					"id" : "obj-9",
 					"maxclass" : "newobj",
 					"numinlets" : 3,
-					"numoutlets" : 6,
-					"outlettype" : [ "signal", "signal", "signal", "signal", "signal", "signal" ],
-					"patching_rect" : [ 84.795833333333348, 175.0, 150.0, 22.0 ],
+					"numoutlets" : 7,
+					"outlettype" : [ "signal", "signal", "signal", "signal", "signal", "signal", "signal" ],
+					"patching_rect" : [ 79.5, 165.0, 150.0, 22.0 ],
 					"text" : "gen~ svf.gendsp"
 				}
 
@@ -466,7 +466,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-24", 0 ],
-					"midpoints" : [ 67.5, 245.0, 257.295833333333348, 245.0 ],
+					"midpoints" : [ 67.5, 235.0, 257.295833333333348, 235.0 ],
 					"order" : 0,
 					"source" : [ "obj-15", 0 ]
 				}
@@ -489,7 +489,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-25", 1 ],
-					"midpoints" : [ 257.295833333333348, 360.5, 273.295833333333348, 360.5 ],
+					"midpoints" : [ 257.295833333333348, 350.5, 273.295833333333348, 350.5 ],
 					"order" : 0,
 					"source" : [ "obj-24", 0 ]
 				}
@@ -500,6 +500,13 @@
 					"destination" : [ "obj-25", 0 ],
 					"order" : 1,
 					"source" : [ "obj-24", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-15", 7 ],
+					"source" : [ "obj-9", 6 ]
 				}
 
 			}
