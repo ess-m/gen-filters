@@ -16,7 +16,7 @@ Move or copy the folder *gen-filters*, including all of its content, into your *
 * ZDF Korg 35 (highpass)
 * ZDF ladder (lowpass)
 * ZDF diode (lowpass)
-* Emilie Gillet SVF (lowpass, highpass, bandpass)
+* Émilie Gillet SVF (lowpass, highpass, bandpass)
 * Andrew Simper SVF (highpass, lowpass, bandpass, notch, peak, allpass)
 * Bell EQ
 * High shelf EQ
