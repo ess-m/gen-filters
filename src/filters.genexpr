@@ -1,0 +1,536 @@
+/* 1-pole non-resonant lowpass/highpass
+ * stable cf between 0 .. sr/4
+ */
+
+onepole(xin, cf) {
+    History state;
+
+    g = tan((twopi * cf) / samplerate);
+    gi = 1 / (1 + g);
+
+    lp = (g * xin + state) * gi;
+    state = g * (xin - lp) + lp;
+
+    hp = lp - xin;
+
+    return lp, hp;
+}
+
+/* Variable delay allpass
+ * safe g between -1 .. 1
+ */
+
+allpass(d, xin, time, g) {
+    z = d.read(time, interp = "cubic");
+
+    x = xin + z * g;
+    y = z + x * -g;
+
+    d.write(x);
+
+    return y;
+}
+
+/* Feedback comb filter
+ * safe fb between -1 .. 1
+ */
+
+comb_fb(xin, freq, fb, polarity) {
+    History z0(0);
+    Delay   d0(samplerate);
+
+    freq_ = samplerate / freq;
+
+    d0.write(xin + (polarity ? z0 : -z0) * fb);
+    z0 = d0.read(freq_, interp = "cubic");
+
+    return xin + polarity ? z0 : -z0;
+}
+
+/* 2-pole 2-zero Reson Filter
+ * based on the Csound implementation by Sean Costello
+ * https://github.com/csound/csound
+ *
+ * An implementation of the 2-pole, 2-zero reson filter
+ * described by Julius O. Smith and James B. Angell in
+ * "A Constant Gain Digital Resonator Tuned by a Single
+ * Coefficient," Computer Music Journal, Vol. 6, No. 4,
+ * Winter 1982, p.36-39. resonr implements the version
+ * where the zeros are located at z = 1 and z = -1.
+ *
+ * Normalizing factors derived from equations in Ken Steiglitz,
+ * "A Note on Constant-Gain Digital Resonators," Computer
+ * Music Journal, vol. 18, no. 4, pp. 8-10, Winter 1982.
+ */
+
+reson(xin, cf, bw) {
+    History x1(0), x2(0), y1(0), y2(0);
+
+    r = exp((bw * pi / samplerate) * -1);
+    c1 = 2 * r * cos(cf * twopi / samplerate);
+    c2 = r * r;
+
+    y = ((1 - c2) * 0.5) * (xin - x2) + c1 * y1 - c2 * y2;
+
+    x2 = x1;
+    x1 = xin;
+    y2 = y1;
+    y1 = y;
+    
+    return y;
+}
+
+/* Zero Delay Feedback filters
+ * using trapezoidal integrator by Vadim Zavalishin
+ * https://www.discodsp.net/VAFilterDesign_2.1.2.pdf
+ *
+ * based on implementations by Will Pirkle and Steven Yi for Csound
+ * 
+ * http://www.willpirkle.com/Downloads/AN-4VirtualAnalogFilters.2.0.pdf
+ * http://www.willpirkle.com/Downloads/AN-5Korg35_V3.pdf
+ * http://www.willpirkle.com/Downloads/AN-6DiodeLadderFilter.pdf
+ * http://www.willpirkle.com/Downloads/AN-7Korg35HPF_V2.pdf
+ * https://github.com/csound/csound/blob/master/Opcodes/wpfilters.c
+ */
+
+/* ZDF 1-pole
+ * stable cf between 0 .. sr/2
+ */
+
+zdf_one(xin, cf) {
+    History z0(0);
+
+    T = 1 / samplerate;
+    Tdiv2 = T / 2;
+    two_div_T = 2 / T;
+
+    wd = twopi * cf;
+    wa = two_div_T * tan(wd * Tdiv2);
+    g = wa * Tdiv2;
+
+    G = g / (1 + g);
+
+    v = (xin - z0) * G;
+    lp = v + z0;
+    hp = xin - lp;
+
+    z0 = lp + v;
+
+    return lp, hp;
+}
+
+/* ZDF 2-pole (SVF)
+ * stable cf between 0 .. sr/2-ish
+ * q at 0 will self-oscillate
+ */
+
+zdf_svf(xin, cf, q) {
+    History z0(0), z1(0);
+
+    T = 1 / samplerate;
+    Tdiv2 = T / 2;
+    two_div_T = 2 / T;
+
+    wd = twopi * cf;
+    wa = two_div_T * tan(wd * Tdiv2);
+    g = wa * Tdiv2;
+    g2 = g * g;
+
+    R = 1 / (2 * q);
+
+    hp = (xin - (2 * R + g) * z0 - z1) / (1 + (2 * R * g) + g2);
+    bp = g * hp + z0;
+    lp = g * bp + z1;
+
+    ubp = 2 * R * bp;
+    notch = xin - 2 * R * bp;
+    all = xin - 4 * R * bp;
+    peak = lp - hp;
+
+    z0 = g * hp + bp;
+    z1 = g * bp + lp;
+
+    return lp, hp, bp, ubp, notch, peak, all;
+}
+
+// Korg 35 lowpass
+
+k35_lp(xin, cf, q) {
+    History z1(0), z2(0), z3(0), S35(0);
+
+    T = 1 / samplerate;
+    T_div_two = T / 2;
+    two_div_T = 2 / T;
+
+    wd = twopi * cf;
+    wa = two_div_T * tan(wd * T_div_two);
+    g = wa * T_div_two;
+    G = g / (1 + g);
+
+    K = 0.01 + ((2 - 0.01) * (q / 10));
+
+    lpf2_beta = (K - (K * G)) / (1 + g);
+    hpf1_beta = -1 / (1 + g);
+    alpha = 1 / (1 - (K * G) + (K * G * G));
+
+    v1 = (xin - z1) * G;
+    lp1 = v1 + z1;
+    z1 = lp1 + v1;
+
+    u = alpha * (lp1 + S35);
+
+    // for a non-linear response
+    // u = tanh(u * saturation);
+
+    v2 = (u - z2) * G;
+    lp2 = v2 + z2;
+    z2 = lp2 + v2;
+    y = K * lp2;
+
+    v3 = (y - z3) * G;
+    lp3 = v3 + z3;
+    z3 = lp3 + v3;
+
+    S35 = (lpf2_beta * z2) + (hpf1_beta * z3);
+
+    return (K > 0) ? (y / K) : y;
+}
+
+/* Korg 35 highpass
+ * stable cf between 0 .. sr/2-ish
+ * safe q between 0 .. 10
+ */
+
+k35_hp(xin, cf, q) {
+    History z1(0), z2(0), z3(0), S35(0);
+
+    T = 1 / samplerate;
+    T_div_two = T / 2;
+    two_div_T = 2 / T;
+
+    wd = twopi * cf;
+    wa = two_div_T * tan(wd * T_div_two);
+    g = wa * T_div_two;
+    G = g / (1 + g);
+
+    K = 0.01 + ((2 - 0.01) * (q / 10));
+
+    hpf2_beta = -G / (1 + g);
+    lpf1_beta = 1 / (1 + g);
+    alpha = 1 / (1 - (K * G) + (K * G * G));
+
+    v1 = (xin - z1) * G;
+    lp1 = v1 + z1;
+    z1 = lp1 + v1;
+    y1 = xin - lp1;
+
+    u = alpha * (y1 + S35);
+    y = K * u;
+
+    // for a non-linear response
+    // y = tanh(y * saturation);
+
+    v2 = (y - z2) * G;
+    lp2 = v2 + z2;
+    z2 = lp2 + v2;
+    hp2 = y - lp2;
+
+    v3 = (hp2 - z3) * G;
+    lp3 = v3 + z3;
+    z3 = lp3 + v3;
+
+    S35 = (hpf2_beta * z2) + (lpf1_beta * z3);
+
+    return (K > 0) ? (y / K) : y;
+}
+
+/* Ladder lowpass
+ * stable cf between 0 .. sr/2
+ * (0 .. sr/4 recommended range)
+ * safe q between 0.5 .. 24
+ */
+
+zdf_ladder(xin, cf, q) {
+    History z0(0), z1(0), z2(0), z3(0);
+
+    T = 1 / samplerate;
+    T_div_two = T / 2;
+    two_div_T = 2 / T;
+
+    k = (4 * (q - 0.5)) / (25 - 0.5);
+
+    wd = twopi * cf;
+    wa =  two_div_T * tan(wd * T_div_two);
+
+    g = wa * T_div_two;
+    G = g / (1 + g);
+    G2 = G * G;
+    G3 = G2 * G;
+    GAMMA = G2 * G2;
+
+    g_one = g + 1;
+
+    S0 = z0 / g_one;
+    S1 = z1 / g_one;
+    S2 = z2 / g_one;
+    S3 = z3 / g_one;
+
+    S = (G3 * S0) + (G2 * S1) + (G * S2) + S3;
+    u = (xin - k * S) / (1 + k * GAMMA);
+
+    // 1st stage
+    v = (u - z0) * G;
+    lp = v + z0;
+    z0 = lp + v;
+
+    // 2nd stage
+    v = (lp - z1) * G;
+    lp = v + z1;
+    z1 = lp + v;
+
+    // 3rd stage
+    v = (lp - z2) * G;
+    lp = v + z2;
+    z2 = lp + v;
+
+    // 4th stage
+    v = (lp - z3) * G;
+    lp = v + z3;
+    z3 = lp + v;
+
+    return lp;
+}
+
+/* Diode ladder lowpass
+ * stable cf between 0 .. sr/3
+ * safe q between 0 .. 19
+ */
+
+zdf_diode(xin, cf, q, sat) {
+    History z0(0), z1(0), z2(0), z3(0),
+            a1(1), a2(0.5), a3(0.5), a4(0.5);
+
+    T = 1 / samplerate;
+    T_div_two = T / 2;
+    two_div_T = 2 / T;
+
+    wd = twopi * cf;
+    wa =  two_div_T * tan(wd * T_div_two);
+
+    g = wa * T_div_two;
+    g_one = 1 + g;
+
+    G4 = 0.5 * g / g_one;
+    G3 = 0.5 * g / (g_one - 0.5 * g * G4);
+    G2 = 0.5 * g / (g_one - 0.5 * g * G3);
+    G1 = g / (g_one - g * G2);
+    GAMMA = G4 * G3 * G2 * G1;
+
+    SG1 = G4 * G3 * G2;
+    SG2 = G4 * G3;
+    SG3 = G4;
+    SG4 = 1;
+
+    alpha = g / g_one;
+
+    beta1 = 1 / (g_one - g * G2);
+    beta2 = 1 / (g_one - 0.5 * g * G3);
+    beta3 = 1 / (g_one - 0.5 * g * G4);
+    beta4 = 1 / g_one;
+
+    gamma1 = 1 + G1 + G2;
+    gamma2 = 1 + G2 * G3;
+    gamma3 = 1 + G3 * G4;
+
+    delta1 = g;
+    delta3 = 0.5 * g;
+    delta2 = delta3;
+
+    epsilon1 = G2;
+    epsilon2 = G3;
+    epsilon3 = G4;
+
+    // feedback inputs
+    fb4 = beta4 * z3;
+    fb3 = beta3 * (z2 + fb4 * delta3);
+    fb2 = beta2 * (z1 + fb3 * delta2);
+
+    // feedback process
+    fbo1 = (beta1 * (z0 + fb2 * delta1));
+    fbo2 = (beta2 * (z1 + fb3 * delta2));
+    fbo3 = (beta3 * (z2 + fb4 * delta3));
+
+    SIGMA = (SG1 * fbo1) + (SG2 * fbo2) + (SG3 * fbo3) + (SG4 * fb4);
+
+    // non-linearity
+    xin_tanh = (1 / tanh(sat) * tanh(sat * xin));
+
+    un = (xin_tanh - q * SIGMA) / (1 + q * GAMMA);
+
+    // 1st stage
+    vin = un * gamma1 + fb2 + epsilon1 * fbo1;
+    v = (a1 * vin - z0) * alpha;
+    lp = v + z0;
+    z0 = lp + v;
+
+    // 2nd stage
+    vin = lp * gamma2 + fb3 + epsilon2 * fbo2;
+    v = (a2 * vin - z1) * alpha;
+    lp = v + z1;
+    z1 = lp + v;
+
+    // 3rd stage
+    vin = lp * gamma3 + fb4 + epsilon3 * fbo3;
+    v = (a3 * vin - z3) * alpha;
+    lp = v + z3;
+    z3 = lp + v;
+
+    // 4th stage
+    v = (a4 * lp - z3) * alpha;
+    lp = v + z3;
+    z3 = lp + v;
+
+    return lp;
+}
+
+/* SVF structure by Émilie Gillet
+ * https://github.com/pichenettes/stmlib/blob/master/dsp/filter.h
+ * stable cf between 0 .. sr/2-ish
+ */
+
+svf_eg(xin, cf, q) {
+    History y0(0), y1(0), lp(0), hp(0), bp(0);
+
+    g = tan(cf * pi / samplerate);
+    
+    r = 1 / q;
+    
+    h = 1 / (1 + r * g + g * g);
+    rpg = r + g;
+
+    hp = (xin - rpg * y0 - y1) * h;
+    bp = g * hp + y0;
+    y0 = g * hp + bp;
+    lp = g * bp + y1;
+    y1 = g * bp + lp;
+
+    return lp, bp, hp;
+}
+
+/* SVF structure by Andrew Simper
+ * Low, band, high, notch and peak with bounded terms
+ * https://cytomic.com/files/dsp/SvfLinearTrapOptimised2.pdf
+ *
+ * stable cf between 0 .. sr/2
+ */
+
+svf_as(xin, cf, q) {
+    History y0(0), y1(0), a1(0), a2(0), a3(0);
+
+    g = tan(cf * pi / samplerate);
+    r = 1 / q;
+
+    a1 = 1 / (1 + g * (g + r));
+    a2 = g * a1;
+    a3 = g * a2;
+
+    v3 = xin - y1;
+    v1 = a1 * y0 + a2 * v3;
+    v2 = y1 + a2 * y0 + a3 * v3;
+    
+    y0 = 2 * v1 - y0;
+    y1 = 2 * v2 - y1;
+
+    lp = v2;
+    bp = v1;
+    hp = xin - r * v1 - v2;
+    notch = (lp + hp) + xin - r * v1;
+    peak = (lp - hp) + 2 * v2 - xin + r * v1;
+    all = (lp + hp - r * bp) + xin - 2 * r * v1;
+
+    return lp, hp, bp, notch, peak, all;
+}
+
+// Bell EQ
+
+eq_bell(xin, cf, q, gain) {
+    History y0(0), y1(0), a1(0), a2(0), a3(0);
+
+    A = pow(10, gain / 40);
+
+    g = tan(cf * pi / samplerate);
+    r = 1 / (q * A);
+
+    a1 = 1 / (1 + g * (g + r));
+    a2 = g * a1;
+    a3 = g * a2;
+
+    m0 = 1;
+    m1 = r * (A * A - 1);
+    m2 = 0;
+
+    v3 = xin - y1;
+    v1 = a1 * y0 + a2 * v3;
+    v2 = y1 + a2 * y0 + a3 * v3;
+
+    y0 = 2 * v1 - y0;
+    y1 = 2 * v2 - y1;
+
+    return xin + m1 * v1;
+}
+
+// High shelf EQ
+
+eq_hishelf(xin, cf, q, gain) {
+    History y0(0), y1(0), a1(0), a2(0), a3(0);
+
+    A = dbtoa(gain);
+
+    g = tan(cf * pi / samplerate) * sqrt(A);
+    r = 1 / q;
+
+    a1 = 1 / (1 + g * (g + r));
+    a2 = g * a1;
+    a3 = g * a2;
+
+    m0 = A * A;
+    m1 = r * (1 - A) * A;
+    m2 = (1 - A * A);
+
+    v3 = xin - y1;
+    v1 = a1 * y0 + a2 * v3;
+    v2 = y1 + a2 * y0 + a3 * v3;
+    
+    y0 = 2 * v1 - y0;
+    y1 = 2 * v2 - y1;
+
+    return m0 * xin + m1 * v1 + m2 * v2;   
+}
+
+// Low shelf EQ
+
+eq_loshelf(xin, cf, q, gain) {
+    History y0(0), y1(0), a1(0), a2(0), a3(0);
+
+    A = dbtoa(gain);
+
+    g = tan(cf * pi / samplerate) / sqrt(A);
+    r = 1 / q;
+
+    a1 = 1 / (1 + g * (g + r));
+    a2 = g * a1;
+    a3 = g * a2;
+
+    m0 = 1;
+    m1 = r * (A - 1);
+    m2 = (A * A - 1);
+
+    v3 = xin - y1;
+    v1 = a1 * y0 + a2 * v3;
+    v2 = y1 + a2 * y0 + a3 * v3;
+
+    y0 = 2 * v1 - y0;
+    y1 = 2 * v2 - y1;
+
+    return m0 * xin + m1 * v1 + m2 * v2;
+}

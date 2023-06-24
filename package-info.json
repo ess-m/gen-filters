@@ -1,0 +1,24 @@
+{
+	"author" : "Ess",
+	"description" : "A collection of audio filters in Gen~",
+	"displayname" : "",
+	"extends" : "",
+	"extensible" : 1,
+	"homepatcher" : "filter-collection.maxpat",
+	"name" : "gen-filters",
+	"os" : 	{
+		"macintosh" : 		{
+			"platform" : [ "ia32", "x64" ],
+			"min_version" : "none"
+		},
+		"windows" : 		{
+			"platform" : [ "ia32", "x64" ],
+			"min_version" : "none"
+		}
+	},
+	"package_extra" : 	{},
+	"readme": "README.md",
+	"tags" : [ "Gen~", "DSP", "Filter" ],
+	"version" : "1.0.0",
+	"website" : "http://mtsn.se"
+}

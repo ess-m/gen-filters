@@ -1,0 +1,154 @@
+{
+	"patcher" : 	{
+		"fileversion" : 1,
+		"appversion" : 		{
+			"major" : 8,
+			"minor" : 5,
+			"revision" : 4,
+			"architecture" : "x64",
+			"modernui" : 1
+		}
+,
+		"classnamespace" : "dsp.gen",
+		"rect" : [ 444.0, 100.0, 755.0, 766.0 ],
+		"bglocked" : 0,
+		"openinpresentation" : 0,
+		"default_fontsize" : 12.0,
+		"default_fontface" : 0,
+		"default_fontname" : "Arial",
+		"gridonopen" : 1,
+		"gridsize" : [ 15.0, 15.0 ],
+		"gridsnaponopen" : 1,
+		"objectsnaponopen" : 1,
+		"statusbarvisible" : 2,
+		"toolbarvisible" : 1,
+		"lefttoolbarpinned" : 0,
+		"toptoolbarpinned" : 0,
+		"righttoolbarpinned" : 0,
+		"bottomtoolbarpinned" : 0,
+		"toolbars_unpinned_last_save" : 0,
+		"tallnewobj" : 0,
+		"boxanimatetime" : 200,
+		"enablehscroll" : 1,
+		"enablevscroll" : 1,
+		"devicewidth" : 0.0,
+		"description" : "",
+		"digest" : "",
+		"tags" : "",
+		"style" : "",
+		"subpatcher_template" : "",
+		"assistshowspatchername" : 0,
+		"boxes" : [ 			{
+				"box" : 				{
+					"id" : "obj-35",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 566.0, 15.0, 153.0, 22.0 ],
+					"text" : "in 4 @comment \"gain (dB)\""
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-21",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 382.333333333333314, 15.0, 103.0, 22.0 ],
+					"text" : "in 3 @comment q"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-9",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 15.0, 720.0, 117.0, 22.0 ],
+					"text" : "out 1 @comment eq"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-7",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 198.666666666666657, 15.0, 149.0, 22.0 ],
+					"text" : "in 2 @comment frequency"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-6",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 15.0, 15.0, 122.0, 22.0 ],
+					"text" : "in 1 @comment input"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"code" : "/* SVF structure by Andrew Simper\r\n * Low, band, high, notch and peak with bounded terms\n * https://cytomic.com/files/dsp/SvfLinearTrapOptimised2.pdf\n *\r\n * stable cf between 0 .. sr/2\r\n */\n\n// High shelf EQ\n\neq_hishelf(xin, cf, q, gain) {\n    History y0(0), y1(0), a1(0), a2(0), a3(0);\n\n    A = dbtoa(gain);\n\n    g = tan(cf * pi / samplerate) * sqrt(A);\n    r = 1 / q;\n\n    a1 = 1 / (1 + g * (g + r));\n    a2 = g * a1;\n    a3 = g * a2;\n\n    m0 = A * A;\n    m1 = r * (1 - A) * A;\n    m2 = (1 - A * A);\n\n    v3 = xin - y1;\n    v1 = a1 * y0 + a2 * v3;\n    v2 = y1 + a2 * y0 + a3 * v3;\n    \n    y0 = 2 * v1 - y0;\n    y1 = 2 * v2 - y1;\n\n    return m0 * xin + m1 * v1 + m2 * v2;   \n}\r\n\r\nlimit = samplerate / 2;\r\n\r\ncf = clip(in2, 0, limit);\r\nq = clip(in3, 0, 1) * 99 + 1;\r\ngain = clip(in4, -60, 60);\r\n\r\nout1 = eq_hishelf(in1, cf, q, gain);",
+					"fontface" : 0,
+					"fontname" : "<Monospaced>",
+					"fontsize" : 12.0,
+					"id" : "obj-5",
+					"maxclass" : "codebox",
+					"numinlets" : 4,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 15.0, 53.0, 570.0, 652.0 ]
+				}
+
+			}
+ ],
+		"lines" : [ 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 2 ],
+					"source" : [ "obj-21", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 3 ],
+					"source" : [ "obj-35", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-9", 0 ],
+					"source" : [ "obj-5", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 0 ],
+					"source" : [ "obj-6", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 1 ],
+					"source" : [ "obj-7", 0 ]
+				}
+
+			}
+ ]
+	}
+
+}

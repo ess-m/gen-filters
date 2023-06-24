@@ -1,0 +1,154 @@
+{
+	"patcher" : 	{
+		"fileversion" : 1,
+		"appversion" : 		{
+			"major" : 8,
+			"minor" : 5,
+			"revision" : 4,
+			"architecture" : "x64",
+			"modernui" : 1
+		}
+,
+		"classnamespace" : "dsp.gen",
+		"rect" : [ 437.0, 100.0, 755.0, 766.0 ],
+		"bglocked" : 0,
+		"openinpresentation" : 0,
+		"default_fontsize" : 12.0,
+		"default_fontface" : 0,
+		"default_fontname" : "Arial",
+		"gridonopen" : 1,
+		"gridsize" : [ 15.0, 15.0 ],
+		"gridsnaponopen" : 1,
+		"objectsnaponopen" : 1,
+		"statusbarvisible" : 2,
+		"toolbarvisible" : 1,
+		"lefttoolbarpinned" : 0,
+		"toptoolbarpinned" : 0,
+		"righttoolbarpinned" : 0,
+		"bottomtoolbarpinned" : 0,
+		"toolbars_unpinned_last_save" : 0,
+		"tallnewobj" : 0,
+		"boxanimatetime" : 200,
+		"enablehscroll" : 1,
+		"enablevscroll" : 1,
+		"devicewidth" : 0.0,
+		"description" : "",
+		"digest" : "",
+		"tags" : "",
+		"style" : "",
+		"subpatcher_template" : "",
+		"assistshowspatchername" : 0,
+		"boxes" : [ 			{
+				"box" : 				{
+					"id" : "obj-35",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 581.0, 15.0, 149.0, 22.0 ],
+					"text" : "in 4 @comment saturation"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-21",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 392.333333333333314, 15.0, 103.0, 22.0 ],
+					"text" : "in 3 @comment q"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-9",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 15.0, 720.0, 147.0, 22.0 ],
+					"text" : "out 1 @comment lowpass"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-7",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 203.666666666666657, 15.0, 149.0, 22.0 ],
+					"text" : "in 2 @comment frequency"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-6",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 15.0, 15.0, 122.0, 22.0 ],
+					"text" : "in 1 @comment input"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"code" : "/* Zero Delay Feedback filters\n * using trapezoidal integrator by Vadim Zavalishin\n * https://www.discodsp.net/VAFilterDesign_2.1.2.pdf\n *\n * based on implementations by Will Pirkle and Steven Yi for Csound\n * \n * http://www.willpirkle.com/Downloads/AN-4VirtualAnalogFilters.2.0.pdf\n * http://www.willpirkle.com/Downloads/AN-5Korg35_V3.pdf\n * http://www.willpirkle.com/Downloads/AN-6DiodeLadderFilter.pdf\n * http://www.willpirkle.com/Downloads/AN-7Korg35HPF_V2.pdf\n * https://github.com/csound/csound/blob/master/Opcodes/wpfilters.c\n */\r\n\r\n/* Diode ladder lowpass\n * stable cf between 0 .. sr/3\n * safe q between 0 .. 19\n */\n\nzdf_diode(xin, cf, q, sat) {\n    History z0(0), z1(0), z2(0), z3(0),\n            a1(1), a2(0.5), a3(0.5), a4(0.5);\n\n    T = 1 / samplerate;\n    T_div_two = T / 2;\n    two_div_T = 2 / T;\n\n    wd = twopi * cf;\n    wa =  two_div_T * tan(wd * T_div_two);\n\n    g = wa * T_div_two;\n    g_one = 1 + g;\n\n    G4 = 0.5 * g / g_one;\n    G3 = 0.5 * g / (g_one - 0.5 * g * G4);\n    G2 = 0.5 * g / (g_one - 0.5 * g * G3);\n    G1 = g / (g_one - g * G2);\n    GAMMA = G4 * G3 * G2 * G1;\n\n    SG1 = G4 * G3 * G2;\n    SG2 = G4 * G3;\n    SG3 = G4;\n    SG4 = 1;\n\n    alpha = g / g_one;\n\n    beta1 = 1 / (g_one - g * G2);\n    beta2 = 1 / (g_one - 0.5 * g * G3);\n    beta3 = 1 / (g_one - 0.5 * g * G4);\n    beta4 = 1 / g_one;\n\n    gamma1 = 1 + G1 + G2;\n    gamma2 = 1 + G2 * G3;\n    gamma3 = 1 + G3 * G4;\n\n    delta1 = g;\n    delta3 = 0.5 * g;\n    delta2 = delta3;\n\n    epsilon1 = G2;\n    epsilon2 = G3;\n    epsilon3 = G4;\n\n    // feedback inputs\n    fb4 = beta4 * z3;\n    fb3 = beta3 * (z2 + fb4 * delta3);\n    fb2 = beta2 * (z1 + fb3 * delta2);\n\n    // feedback process\n    fbo1 = (beta1 * (z0 + fb2 * delta1));\n    fbo2 = (beta2 * (z1 + fb3 * delta2));\n    fbo3 = (beta3 * (z2 + fb4 * delta3));\n\n    SIGMA = (SG1 * fbo1) + (SG2 * fbo2) + (SG3 * fbo3) + (SG4 * fb4);\n\n    // non-linearity\n    xin_tanh = (1 / tanh(sat) * tanh(sat * xin));\n\n    un = (xin_tanh - q * SIGMA) / (1 + q * GAMMA);\n\n    // 1st stage\n    vin = un * gamma1 + fb2 + epsilon1 * fbo1;\n    v = (a1 * vin - z0) * alpha;\n    lp = v + z0;\n    z0 = lp + v;\n\n    // 2nd stage\n    vin = lp * gamma2 + fb3 + epsilon2 * fbo2;\n    v = (a2 * vin - z1) * alpha;\n    lp = v + z1;\n    z1 = lp + v;\n\n    // 3rd stage\n    vin = lp * gamma3 + fb4 + epsilon3 * fbo3;\n    v = (a3 * vin - z3) * alpha;\n    lp = v + z3;\n    z3 = lp + v;\n\n    // 4th stage\n    v = (a4 * lp - z3) * alpha;\n    lp = v + z3;\n    z3 = lp + v;\n\n    return lp;\n}\r\n\r\nlimit = samplerate / 3;\r\n\r\ncf = clip(in2, 0, limit);\r\nq = clip(in3, 0, 1) * 19;\r\nsat = clip(in4, 0, 1) * 30 + 0.001;\r\n\r\nout1 = zdf_diode(in1, cf, q, sat);",
+					"fontface" : 0,
+					"fontname" : "<Monospaced>",
+					"fontsize" : 12.0,
+					"id" : "obj-5",
+					"maxclass" : "codebox",
+					"numinlets" : 4,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 15.0, 53.0, 585.0, 652.0 ]
+				}
+
+			}
+ ],
+		"lines" : [ 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 2 ],
+					"source" : [ "obj-21", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 3 ],
+					"source" : [ "obj-35", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-9", 0 ],
+					"source" : [ "obj-5", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 0 ],
+					"source" : [ "obj-6", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 1 ],
+					"source" : [ "obj-7", 0 ]
+				}
+
+			}
+ ]
+	}
+
+}

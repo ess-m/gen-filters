@@ -1,0 +1,135 @@
+{
+	"patcher" : 	{
+		"fileversion" : 1,
+		"appversion" : 		{
+			"major" : 8,
+			"minor" : 5,
+			"revision" : 4,
+			"architecture" : "x64",
+			"modernui" : 1
+		}
+,
+		"classnamespace" : "dsp.gen",
+		"rect" : [ 411.0, 184.0, 736.0, 716.0 ],
+		"bglocked" : 0,
+		"openinpresentation" : 0,
+		"default_fontsize" : 12.0,
+		"default_fontface" : 0,
+		"default_fontname" : "Arial",
+		"gridonopen" : 1,
+		"gridsize" : [ 15.0, 15.0 ],
+		"gridsnaponopen" : 1,
+		"objectsnaponopen" : 1,
+		"statusbarvisible" : 2,
+		"toolbarvisible" : 1,
+		"lefttoolbarpinned" : 0,
+		"toptoolbarpinned" : 0,
+		"righttoolbarpinned" : 0,
+		"bottomtoolbarpinned" : 0,
+		"toolbars_unpinned_last_save" : 0,
+		"tallnewobj" : 0,
+		"boxanimatetime" : 200,
+		"enablehscroll" : 1,
+		"enablevscroll" : 1,
+		"devicewidth" : 0.0,
+		"description" : "",
+		"digest" : "",
+		"tags" : "",
+		"style" : "",
+		"subpatcher_template" : "",
+		"assistshowspatchername" : 0,
+		"boxes" : [ 			{
+				"box" : 				{
+					"id" : "obj-21",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 566.0, 15.0, 151.0, 22.0 ],
+					"text" : "in 3 @comment bandwidth"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-9",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 15.0, 675.0, 133.0, 22.0 ],
+					"text" : "out 1 @comment reson"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-7",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 290.5, 15.0, 149.0, 22.0 ],
+					"text" : "in 2 @comment frequency"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-6",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 15.0, 15.0, 122.0, 22.0 ],
+					"text" : "in 1 @comment input"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"code" : "/* 2-pole 2-zero Reson Filter\n * based on the Csound implementation by Sean Costello\n * https://github.com/csound/csound\n *\n * An implementation of the 2-pole, 2-zero reson filter\n * described by Julius O. Smith and James B. Angell in\n * \"A Constant Gain Digital Resonator Tuned by a Single\n * Coefficient,\" Computer Music Journal, Vol. 6, No. 4,\n * Winter 1982, p.36-39. resonr implements the version\n * where the zeros are located at z = 1 and z = -1.\n *\n * Normalizing factors derived from equations in Ken Steiglitz,\n * \"A Note on Constant-Gain Digital Resonators,\" Computer\n * Music Journal, vol. 18, no. 4, pp. 8-10, Winter 1982.\n */\n\nreson(xin, cf, bw) {\n    History x1(0), x2(0), y1(0), y2(0);\n\n    r = exp((bw * pi / samplerate) * -1);\n    c1 = 2 * r * cos(cf * twopi / samplerate);\n    c2 = r * r;\n\n    y = ((1 - c2) * 0.5) * (xin - x2) + c1 * y1 - c2 * y2;\n\n    x2 = x1;\n    x1 = xin;\n    y2 = y1;\n    y1 = y;\n    \n    return y;\n}\r\n\r\nlimit = samplerate / 2;\r\n\r\ncf = clip(in2, 0, limit);\r\nbw = clip(in3, 0, limit);\r\n\r\nout1 = reson(in1, cf, bw);",
+					"fontface" : 0,
+					"fontname" : "<Monospaced>",
+					"fontsize" : 12.0,
+					"id" : "obj-5",
+					"maxclass" : "codebox",
+					"numinlets" : 3,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 15.0, 53.0, 570.0, 607.0 ]
+				}
+
+			}
+ ],
+		"lines" : [ 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 2 ],
+					"source" : [ "obj-21", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-9", 0 ],
+					"source" : [ "obj-5", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 0 ],
+					"source" : [ "obj-6", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 1 ],
+					"source" : [ "obj-7", 0 ]
+				}
+
+			}
+ ]
+	}
+
+}

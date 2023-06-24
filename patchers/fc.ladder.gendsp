@@ -1,0 +1,135 @@
+{
+	"patcher" : 	{
+		"fileversion" : 1,
+		"appversion" : 		{
+			"major" : 8,
+			"minor" : 5,
+			"revision" : 4,
+			"architecture" : "x64",
+			"modernui" : 1
+		}
+,
+		"classnamespace" : "dsp.gen",
+		"rect" : [ 590.0, 107.0, 755.0, 766.0 ],
+		"bglocked" : 0,
+		"openinpresentation" : 0,
+		"default_fontsize" : 12.0,
+		"default_fontface" : 0,
+		"default_fontname" : "Arial",
+		"gridonopen" : 1,
+		"gridsize" : [ 15.0, 15.0 ],
+		"gridsnaponopen" : 1,
+		"objectsnaponopen" : 1,
+		"statusbarvisible" : 2,
+		"toolbarvisible" : 1,
+		"lefttoolbarpinned" : 0,
+		"toptoolbarpinned" : 0,
+		"righttoolbarpinned" : 0,
+		"bottomtoolbarpinned" : 0,
+		"toolbars_unpinned_last_save" : 0,
+		"tallnewobj" : 0,
+		"boxanimatetime" : 200,
+		"enablehscroll" : 1,
+		"enablevscroll" : 1,
+		"devicewidth" : 0.0,
+		"description" : "",
+		"digest" : "",
+		"tags" : "",
+		"style" : "",
+		"subpatcher_template" : "",
+		"assistshowspatchername" : 0,
+		"boxes" : [ 			{
+				"box" : 				{
+					"id" : "obj-21",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 581.0, 15.0, 103.0, 22.0 ],
+					"text" : "in 3 @comment q"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-9",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 15.0, 720.0, 147.0, 22.0 ],
+					"text" : "out 1 @comment lowpass"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-7",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 298.0, 15.0, 149.0, 22.0 ],
+					"text" : "in 2 @comment frequency"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-6",
+					"maxclass" : "newobj",
+					"numinlets" : 0,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 15.0, 15.0, 122.0, 22.0 ],
+					"text" : "in 1 @comment input"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"code" : "/* Zero Delay Feedback filters\n * using trapezoidal integrator by Vadim Zavalishin\n * https://www.discodsp.net/VAFilterDesign_2.1.2.pdf\n *\n * based on implementations by Will Pirkle and Steven Yi for Csound\n * \n * http://www.willpirkle.com/Downloads/AN-4VirtualAnalogFilters.2.0.pdf\n * http://www.willpirkle.com/Downloads/AN-5Korg35_V3.pdf\n * http://www.willpirkle.com/Downloads/AN-6DiodeLadderFilter.pdf\n * http://www.willpirkle.com/Downloads/AN-7Korg35HPF_V2.pdf\n * https://github.com/csound/csound/blob/master/Opcodes/wpfilters.c\n */\r\n\r\n/* Ladder lowpass\n * stable cf between 0 .. sr/2\n * (0 .. sr/4 recommended range)\n * safe q between 0.5 .. 24\n */\n\nzdf_ladder(xin, cf, q) {\n    History z0(0), z1(0), z2(0), z3(0);\n\n    T = 1 / samplerate;\n    T_div_two = T / 2;\n    two_div_T = 2 / T;\n\n    k = (4 * (q - 0.5)) / (25 - 0.5);\n\n    wd = twopi * cf;\n    wa =  two_div_T * tan(wd * T_div_two);\n\n    g = wa * T_div_two;\n    G = g / (1 + g);\n    G2 = G * G;\n    G3 = G2 * G;\n    GAMMA = G2 * G2;\n\n    g_one = g + 1;\n\n    S0 = z0 / g_one;\n    S1 = z1 / g_one;\n    S2 = z2 / g_one;\n    S3 = z3 / g_one;\n\n    S = (G3 * S0) + (G2 * S1) + (G * S2) + S3;\n    u = (xin - k * S) / (1 + k * GAMMA);\n\n    // 1st stage\n    v = (u - z0) * G;\n    lp = v + z0;\n    z0 = lp + v;\n\n    // 2nd stage\n    v = (lp - z1) * G;\n    lp = v + z1;\n    z1 = lp + v;\n\n    // 3rd stage\n    v = (lp - z2) * G;\n    lp = v + z2;\n    z2 = lp + v;\n\n    // 4th stage\n    v = (lp - z3) * G;\n    lp = v + z3;\n    z3 = lp + v;\n\n    return lp;\n}\r\n\r\nlimit = samplerate / 2;\r\n\r\ncf = clip(in2, 0, limit);\r\nq = clip(in3, 0, 1) * 23.5 + 0.5;\r\n\r\nout1 = zdf_ladder(in1, cf, q);",
+					"fontface" : 0,
+					"fontname" : "<Monospaced>",
+					"fontsize" : 12.0,
+					"id" : "obj-5",
+					"maxclass" : "codebox",
+					"numinlets" : 3,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 15.0, 53.0, 585.0, 652.0 ]
+				}
+
+			}
+ ],
+		"lines" : [ 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 2 ],
+					"source" : [ "obj-21", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-9", 0 ],
+					"source" : [ "obj-5", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 0 ],
+					"source" : [ "obj-6", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 1 ],
+					"source" : [ "obj-7", 0 ]
+				}
+
+			}
+ ]
+	}
+
+}
