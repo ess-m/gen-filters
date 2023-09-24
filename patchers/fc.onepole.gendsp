@@ -4,7 +4,7 @@
 		"appversion" : 		{
 			"major" : 8,
 			"minor" : 5,
-			"revision" : 4,
+			"revision" : 5,
 			"architecture" : "x64",
 			"modernui" : 1
 		}
@@ -86,7 +86,7 @@
 			}
 , 			{
 				"box" : 				{
-					"code" : "// 1-pole non-resonant lowpass/highpass\n\nonepole(xin, cf) {\n    History state;\n\n    g = tan((twopi * cf) / samplerate);\n    gi = 1 / (1 + g);\n\n    lp = (g * xin + state) * gi;\n    state = g * (xin - lp) + lp;\n\n    hp = lp - xin;\n\n    return lp, hp;\n}\r\n\r\nlimit = samplerate / 4;\r\n\r\ncf = clip(in2, 0, limit);\r\nout1, out2 = onepole(in1, cf);",
+					"code" : "// 1-pole non-resonant lowpass/highpass\n\nonepole(xin, cf) {\n    History state;\n\n    g = tan((twopi * cf) / samplerate);\n    gi = 1 / (1 + g);\n\n    lp = (g * xin + state) * gi;\n    state = g * (xin - lp) + lp;\n\n    hp = xin - lp;\n\n    return lp, hp;\n}\r\n\r\nlimit = samplerate / 4;\r\n\r\ncf = clip(in2, 0, limit);\r\nout1, out2 = onepole(in1, cf);",
 					"fontface" : 0,
 					"fontname" : "<Monospaced>",
 					"fontsize" : 12.0,

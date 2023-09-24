@@ -11,7 +11,7 @@ onepole(xin, cf) {
     lp = (g * xin + state) * gi;
     state = g * (xin - lp) + lp;
 
-    hp = lp - xin;
+    hp = xin - lp;
 
     return lp, hp;
 }
